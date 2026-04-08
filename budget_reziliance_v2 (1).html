@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bilan Budgétaire – Reziliance</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #B8965A;
+    --gold-light: #D4B07A;
+    --gold-pale: #F5EDD8;
+    --dark: #1A1A1A;
+    --mid: #5A5A5A;
+    --light: #F9F7F3;
+    --border: #E2D9C8;
+    --white: #FFFFFF;
+    --positive: #2D6A4F;
+    --negative: #A32D2D;
+    --section-bg: #FDFBF7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+  .header {
+    background: var(--dark); padding: 2.5rem 2rem 2rem; text-align: center; position: relative;
+  }
+  .header::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+  }
+  .header-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: #fff; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+  .header-logo span { color: var(--gold); }
+  .header-sub { font-size: 0.75rem; color: #888; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.5rem; }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #fff; font-weight: 400; margin-bottom: 0.5rem; }
+  .header-desc { font-size: 0.85rem; color: #AAA; max-width: 480px; margin: 0 auto; line-height: 1.6; }
+
+  .progress-bar-wrap { background: var(--dark); padding: 1rem 2rem 1.5rem; border-bottom: 1px solid #333; }
+  .progress-steps { display: flex; justify-content: center; max-width: 600px; margin: 0 auto; }
+  .step-item { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
+  .step-item:not(:last-child)::after {
+    content: ''; position: absolute; top: 14px; left: 50%; right: -50%; height: 1px; background: #444; z-index: 0;
+  }
+  .step-item.active:not(:last-child)::after, .step-item.done:not(:last-child)::after { background: var(--gold); }
+  .step-dot {
+    width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid #444; background: var(--dark);
+    display: flex; align-items: center; justify-content: center; font-size: 11px; color: #666; position: relative; z-index: 1; transition: all 0.3s;
+  }
+  .step-item.active .step-dot { border-color: var(--gold); background: var(--gold); color: var(--dark); font-weight: 500; }
+  .step-item.done .step-dot { border-color: var(--gold); background: transparent; color: var(--gold); }
+  .step-label { font-size: 10px; color: #555; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
+  .step-item.active .step-label { color: var(--gold); }
+
+  .container { max-width: 820px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .step-section { display: none; }
+  .step-section.visible { display: block; }
+
+  .intro-card {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; text-align: center;
+  }
+  .intro-icon {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--gold-pale); margin: 0 auto 1rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .intro-icon svg { width: 24px; height: 24px; stroke: var(--gold); fill: none; stroke-width: 1.5; }
+  .intro-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 0.75rem; }
+  .intro-text { font-size: 0.9rem; color: var(--mid); line-height: 1.7; max-width: 480px; margin: 0 auto 1.5rem; }
+
+  .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 400px; margin: 0 auto; }
+  .choice-btn {
+    border: 1.5px solid var(--border); border-radius: 10px; padding: 1.25rem 1rem;
+    background: var(--section-bg); cursor: pointer; text-align: center; transition: all 0.2s;
+  }
+  .choice-btn:hover, .choice-btn.selected { border-color: var(--gold); background: var(--gold-pale); }
+  .choice-btn .choice-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .choice-btn .choice-label { font-size: 0.85rem; font-weight: 500; color: var(--dark); }
+  .choice-btn .choice-sub { font-size: 0.75rem; color: var(--mid); margin-top: 0.2rem; }
+
+  .section-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 1rem; overflow: hidden; }
+  .section-header {
+    padding: 0.9rem 1.25rem; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; background: var(--section-bg); border-bottom: 1px solid var(--border); user-select: none;
+  }
+  .section-header-left { display: flex; align-items: center; gap: 0.75rem; }
+  .section-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--gold-pale); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 500; }
+  .section-chevron { transition: transform 0.2s; color: var(--mid); font-size: 0.75rem; }
+  .section-header.open .section-chevron { transform: rotate(180deg); }
+  .section-body { display: none; padding: 0; }
+  .section-body.open { display: block; }
+
+  /* Sticky column headers inside each section */
+  .col-heads-sticky {
+    display: grid; gap: 0.5rem; padding: 0.6rem 1.25rem 0.4rem;
+    background: #F5F0E8; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 2;
+  }
+  .col-heads-sticky span { font-size: 0.7rem; color: var(--mid); text-transform: uppercase; letter-spacing: 0.07em; text-align: center; font-weight: 500; }
+  .col-heads-sticky span:first-child { text-align: left; color: transparent; }
+
+  .fields-body { padding: 0.75rem 1.25rem 1rem; }
+
+  /* Field rows: label + mensuel + annuel (auto-calc) */
+  .field-row { display: grid; gap: 0.5rem; margin-bottom: 0.6rem; align-items: center; }
+  .field-row.solo { grid-template-columns: 1fr 130px 130px; }
+  .field-row.couple { grid-template-columns: 1fr 100px 100px 100px 100px; }
+
+  .col-heads-sticky.solo { grid-template-columns: 1fr 130px 130px; }
+  .col-heads-sticky.couple { grid-template-columns: 1fr 100px 100px 100px 100px; }
+
+  .field-label { font-size: 0.82rem; color: var(--mid); line-height: 1.4; }
+
+  .input-wrap { position: relative; }
+  .input-wrap::before {
+    content: '€'; position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+    font-size: 0.78rem; color: var(--gold); pointer-events: none; z-index: 1;
+  }
+  .field-input {
+    height: 36px; border: 1px solid var(--border); border-radius: 7px; padding: 0 0.5rem 0 1.6rem;
+    font-size: 0.88rem; font-family: 'DM Sans', sans-serif; color: var(--dark);
+    background: var(--section-bg); width: 100%; transition: border-color 0.2s;
+  }
+  .field-input:focus { outline: none; border-color: var(--gold); background: var(--white); }
+  .field-input.readonly {
+    background: #F0EBE0; color: var(--mid); cursor: default; border-color: transparent;
+  }
+  .field-input.editable-name {
+    padding-left: 0.6rem; font-style: italic; color: var(--mid);
+  }
+  .field-input.editable-name:focus { font-style: normal; color: var(--dark); }
+
+  .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; gap: 1rem; }
+  .btn { padding: 0.75rem 1.75rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border: none; }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--mid); }
+  .btn-outline:hover { border-color: var(--gold); color: var(--dark); }
+  .btn-primary { background: var(--gold); color: var(--dark); }
+  .btn-primary:hover { background: var(--gold-light); }
+  .btn-primary:disabled { background: var(--border); color: var(--mid); cursor: not-allowed; }
+
+  .synthese-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .synth-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; text-align: center; }
+  .synth-card.highlight { border-color: var(--gold); background: var(--gold-pale); }
+  .synth-label { font-size: 0.75rem; color: var(--mid); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+  .synth-value { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 500; }
+  .synth-value.positive { color: var(--positive); }
+  .synth-value.negative { color: var(--negative); }
+  .synth-value.gold { color: var(--gold); }
+  .synth-sub { font-size: 0.75rem; color: var(--mid); margin-top: 0.25rem; }
+
+  .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+  .detail-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mid); padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+  .detail-table th:not(:first-child) { text-align: right; }
+  .detail-table td { font-size: 0.83rem; padding: 0.5rem 0.75rem; color: var(--mid); border-bottom: 1px solid #F0EBE0; }
+  .detail-table td:not(:first-child) { text-align: right; }
+  .detail-table tr.cat-row td { font-weight: 500; color: var(--dark); background: var(--section-bg); font-size: 0.85rem; }
+
+  .disclaimer { font-size: 0.75rem; color: #AAA; text-align: center; margin-top: 2rem; line-height: 1.6; border-top: 1px solid var(--border); padding-top: 1.5rem; }
+
+  .footer { background: var(--dark); padding: 1.5rem 2rem; text-align: center; border-top: 1px solid #333; }
+  .footer-text { font-size: 0.75rem; color: #666; }
+  .footer-brand { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 0.8rem; }
+
+  .send-status { margin-top: 1rem; font-size: 0.85rem; text-align: center; color: var(--mid); }
+  .send-status.ok { color: var(--positive); }
+  .send-status.err { color: var(--negative); }
+
+  @media (max-width: 600px) {
+    .synthese-grid { grid-template-columns: 1fr; }
+    .field-row.solo { grid-template-columns: 1fr 100px 90px; }
+    .field-row.couple { grid-template-columns: 1fr 80px 80px 80px 80px; }
+    .col-heads-sticky.solo { grid-template-columns: 1fr 100px 90px; }
+    .col-heads-sticky.couple { grid-template-columns: 1fr 80px 80px 80px 80px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">Reziliance <span>·</span> Conseil & Stratégie Patrimoniale</div>
+  <div class="header-sub">Espace client confidentiel</div>
+  <div class="header-title">Tableau budgétaire</div>
+  <div class="header-desc">Ce formulaire vous permet de nous transmettre votre situation budgétaire en toute sécurité, avant notre rendez-vous patrimonial.</div>
+</div>
+
+<div class="progress-bar-wrap">
+  <div class="progress-steps">
+    <div class="step-item active" id="prog-0"><div class="step-dot">1</div><div class="step-label">Profil</div></div>
+    <div class="step-item" id="prog-1"><div class="step-dot">2</div><div class="step-label">Revenus</div></div>
+    <div class="step-item" id="prog-2"><div class="step-dot">3</div><div class="step-label">Dépenses</div></div>
+    <div class="step-item" id="prog-3"><div class="step-dot">4</div><div class="step-label">Synthèse</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- STEP 0 : Profil -->
+  <div class="step-section visible" id="step-0">
+    <div class="intro-card">
+      <div class="intro-icon">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="intro-title">Bienvenue</div>
+      <div class="intro-text">Avant de commencer, précisez votre situation familiale. Les champs s'adapteront à votre foyer.</div>
+      <div class="choice-grid">
+        <div class="choice-btn" onclick="setSituation('solo', this)">
+          <div class="choice-icon">👤</div>
+          <div class="choice-label">Seul(e)</div>
+          <div class="choice-sub">Célibataire / divorcé(e)</div>
+        </div>
+        <div class="choice-btn" onclick="setSituation('couple', this)">
+          <div class="choice-icon">👥</div>
+          <div class="choice-label">En couple</div>
+          <div class="choice-sub">Marié(e) / pacsé(e) / union libre</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="identity-form" style="display:none;">
+      <div class="section-card">
+        <div class="section-header open" onclick="toggleSection(this)">
+          <div class="section-header-left">
+            <div class="section-icon">📋</div>
+            <div class="section-title">Informations générales</div>
+          </div>
+          <span class="section-chevron">▼</span>
+        </div>
+        <div class="section-body open" style="padding:1.25rem;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+            <div>
+              <div style="font-size:0.8rem;color:var(--mid);margin-bottom:0.3rem;">Votre prénom</div>
+              <input type="text" class="field-input" style="padding-left:0.75rem;" id="prenom1" placeholder="Prénom">
+            </div>
+            <div id="prenom2-wrap">
+              <div style="font-size:0.8rem;color:var(--mid);margin-bottom:0.3rem;">Prénom du conjoint</div>
+              <input type="text" class="field-input" style="padding-left:0.75rem;" id="prenom2" placeholder="Prénom">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+            <div>
+              <div style="font-size:0.8rem;color:var(--mid);margin-bottom:0.3rem;">Email de contact</div>
+              <input type="email" class="field-input" style="padding-left:0.75rem;" id="email" placeholder="votre@email.fr">
+            </div>
+            <div>
+              <div style="font-size:0.8rem;color:var(--mid);margin-bottom:0.3rem;">Date du rendez-vous</div>
+              <input type="date" class="field-input" style="padding-left:0.75rem;" id="rdv-date">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-row" style="justify-content:flex-end;">
+      <button class="btn btn-primary" id="btn-0-next" onclick="goStep(1)" disabled>Continuer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 1 : REVENUS -->
+  <div class="step-section" id="step-1">
+    <div style="margin-bottom:1.25rem;">
+      <div style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:0.25rem;">Vos revenus</div>
+      <div style="font-size:0.85rem;color:var(--mid);">Saisissez les montants mensuels nets. L'annuel se calcule automatiquement.</div>
+    </div>
+    <div id="revenus-container"></div>
+    <div class="nav-row">
+      <button class="btn btn-outline" onclick="goStep(0)">← Retour</button>
+      <button class="btn btn-primary" onclick="goStep(2)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 : DÉPENSES -->
+  <div class="step-section" id="step-2">
+    <div style="margin-bottom:1.25rem;">
+      <div style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:0.25rem;">Vos dépenses</div>
+      <div style="font-size:0.85rem;color:var(--mid);">Saisissez les montants mensuels. L'annuel se calcule automatiquement.</div>
+    </div>
+    <div id="depenses-container"></div>
+    <div class="nav-row">
+      <button class="btn btn-outline" onclick="goStep(1)">← Retour</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Voir la synthèse →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 : SYNTHÈSE -->
+  <div class="step-section" id="step-3">
+    <div style="font-family:'Playfair Display',serif;font-size:1.25rem;margin-bottom:1.25rem;">Votre synthèse budgétaire</div>
+    <div class="synthese-grid">
+      <div class="synth-card">
+        <div class="synth-label">Revenus mensuels</div>
+        <div class="synth-value gold" id="s-revenus">0 €</div>
+        <div class="synth-sub" id="s-revenus-an">0 € / an</div>
+      </div>
+      <div class="synth-card">
+        <div class="synth-label">Dépenses mensuelles</div>
+        <div class="synth-value" id="s-depenses">0 €</div>
+        <div class="synth-sub" id="s-depenses-an">0 € / an</div>
+      </div>
+    </div>
+    <div class="synth-card highlight" style="margin-bottom:1.5rem;text-align:center;">
+      <div class="synth-label">Solde budgétaire mensuel</div>
+      <div class="synth-value" id="s-solde">0 €</div>
+      <div class="synth-sub" id="s-solde-an">0 € / an</div>
+    </div>
+    <div id="detail-revenus"></div>
+    <div id="detail-depenses"></div>
+
+    <div class="disclaimer">
+      Ces informations sont transmises de manière confidentielle à votre conseiller Reziliance dans le cadre de la préparation de votre bilan patrimonial.<br><br>
+      <strong>Reziliance – Conseil & Stratégie Patrimoniale</strong> — Sous l'égide d'INOVEA
+    </div>
+
+    <div id="send-status" class="send-status"></div>
+
+    <div class="nav-row">
+      <button class="btn btn-outline" onclick="goStep(2)">← Modifier</button>
+      <button class="btn btn-primary" id="btn-send" onclick="submitForm()">Envoyer à mon conseiller ✓</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 : CONFIRMATION -->
+  <div class="step-section" id="step-4">
+    <div class="intro-card" style="padding:3rem 2rem;">
+      <div class="intro-icon" style="background:#EAF3DE;">
+        <svg viewBox="0 0 24 24" style="stroke:#3B6D11;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="intro-title">Tableau transmis avec succès</div>
+      <div class="intro-text">Merci <span id="confirm-name"></span>. Votre conseiller Reziliance a bien reçu votre tableau budgétaire et vous contactera avant votre rendez-vous.<br><br>Vous pouvez fermer cette fenêtre.</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-brand">Reziliance · Conseil & Stratégie Patrimoniale</div>
+  <div class="footer-text" style="margin-top:0.25rem;">Document confidentiel – Usage exclusif dans le cadre du bilan patrimonial</div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+// conjoint: true = champ dupliqué Conj1/Conj2 en mode couple
+// editable: true = label modifiable par le client
+const REVENUS_DATA = [
+  { cat: "Revenus d'activité", icon: "💼", items: [
+    { label: "Salaires", conjoint: true },
+    { label: "BIC / BNC", conjoint: true },
+    { label: "Dividendes", conjoint: true },
+    { label: "Prime annuelle", conjoint: true },
+    { label: "Revenus de Gérant et associés", conjoint: true },
+    { label: "Allocation chômage", conjoint: true },
+    { label: "Bénéfices agricoles", conjoint: true },
+    { label: "Prestations sociales (maternité, maladie)", conjoint: false }
+  ]},
+  { cat: "Revenus du patrimoine", icon: "🏠", items: [
+    { label: "Revenus locatifs (immobilier, SCI, SCPI, meublé)", conjoint: true }
+  ]},
+  { cat: "Pensions, retraites et rentes", icon: "🧓", items: [
+    { label: "Pensions retraite ou invalidité", conjoint: true },
+    { label: "Pensions alimentaires perçues", conjoint: true },
+    { label: "Rentes viagères", conjoint: true }
+  ]},
+  { cat: "Prestations sociales", icon: "🏥", items: [
+    { label: "CAF (RSA, APL, allocations familiales…)", conjoint: true },
+    { label: "Sécurité sociale (arrêt maladie)", conjoint: true }
+  ]}
+];
+
+const DEPENSES_DATA = [
+  { cat: "Dépense courante", icon: "🛒", items: [
+    { label: "Loyer principal" },
+    { label: "Dépenses alimentaires (courses, livraisons, boulangerie…)" },
+    { label: "Eau" },
+    { label: "Electricité" },
+    { label: "Chauffage (gaz, bois, fioul...)" },
+    { label: "Télécoms (téléphonie, internet, ...)" },
+    { label: "Assurance habitation" },
+    { label: "Assurance santé" },
+    { label: "Charges de copropriété, syndic, garage…" },
+    { label: "Entretien maison" },
+    { label: "Prestations divers" },
+    { label: "Dépenses vestimentaires" },
+    { label: "Soins médicaux" },
+    { label: "Soins paramédicaux" },
+    { label: "Soins vétérinaires et toilettage" },
+    { label: "Animaux (nourriture, jouets, gardiennage…)" },
+    { label: "Assurance propriétaire non occupant" }
+  ]},
+  { cat: "Banque & crédits", icon: "🏦", items: [
+    { label: "Prêt résidence principale" },
+    { label: "Autres prêts immobiliers (résidence secondaire, locatif…)" },
+    { label: "Autres prêts bancaires (conso, auto, travaux, étudiant…)" },
+    { label: "Assurances prêts résidence principale" },
+    { label: "Frais bancaires (carte de crédit, frais de comptes…)" }
+  ]},
+  { cat: "Impôts et taxes", icon: "📋", items: [
+    { label: "Impôt sur le revenu" },
+    { label: "Taxe(s) foncière(s)" },
+    { label: "Taxe d'habitation" },
+    { label: "Impôt sur la fortune immobilière (IFI)" }
+  ]},
+  { cat: "Transports", icon: "🚗", items: [
+    { label: "Transports en commun (métro, bus, taxi, train…)" },
+    { label: "Carburant (essence, gasoil, GPL, électrique…)" },
+    { label: "Assurance auto, moto" },
+    { label: "Entretien, réparation véhicule" },
+    { label: "Stationnement / parking / péage" }
+  ]},
+  { cat: "Enfants", icon: "👶", items: [
+    { label: "Frais de garde (babysitting, garderie, crèche…)" },
+    { label: "Frais scolaires (école, cantine, restaurant universitaire…)" },
+    { label: "Activités enfants" },
+    { label: "Transport(s) enfant(s) (car scolaire, carte 12-25,...)" },
+    { label: "Loyer(s) enfant(s) (studio, résidence universitaire…)" },
+    { label: "Pension(s) alimentaire(s) versée(s) / argent de poche" }
+  ]},
+  { cat: "Loisirs & vie sociale", icon: "🎭", items: [
+    { label: "Restaurants, bars" },
+    { label: "Sport, loisirs (cinéma, musique, amis…)" },
+    { label: "Vacances, voyages" },
+    { label: "Abonnements (Magazines, Applications, Télé, Musique…)" },
+    { label: "Cadeaux (anniversaire, noël…)" },
+    { label: "Dons (humanitaire, association caritatives…)" },
+    { label: "Tabac, loterie" }
+  ]},
+  { cat: "Autres dépenses", icon: "📦", items: [
+    { label: "À préciser…", editable: true },
+    { label: "À préciser…", editable: true },
+    { label: "À préciser…", editable: true }
+  ]}
+];
+
+// ─── STATE ──────────────────────────────────────────────
+let situation = null;
+// savedValues[type][gi][ii][col] = value  (col: 0=c1_mensuel, 1=c2_mensuel)
+// savedLabels[type][gi][ii] = custom label
+const savedValues = { revenus: {}, depenses: {} };
+const savedLabels = { revenus: {}, depenses: {} };
+
+// ─── INIT ────────────────────────────────────────────────
+function setSituation(type, el) {
+  situation = type;
+  document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('identity-form').style.display = 'block';
+  document.getElementById('prenom2-wrap').style.display = type === 'couple' ? 'block' : 'none';
+  document.getElementById('btn-0-next').disabled = false;
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────
+function goStep(n) {
+  // Save before leaving
+  if (n !== 0) saveCurrentStep();
+
+  const prev = document.querySelector('.step-section.visible');
+  if (prev) prev.classList.remove('visible');
+
+  if (n === 1) buildContainer('revenus-container', REVENUS_DATA, 'revenus');
+  if (n === 2) buildContainer('depenses-container', DEPENSES_DATA, 'depenses');
+  if (n === 3) buildSynthese();
+
+  document.getElementById('step-' + n).classList.add('visible');
+  document.querySelectorAll('.progress-steps .step-item').forEach((el, i) => {
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    if (i === n) el.classList.add('active');
+  });
+  window.scrollTo(0, 0);
+}
+
+function saveCurrentStep() {
+  // Save revenus
+  saveGroup(REVENUS_DATA, 'revenus', 'revenus-container');
+  saveGroup(DEPENSES_DATA, 'depenses', 'depenses-container');
+}
+
+function saveGroup(data, type, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container || !container.children.length) return;
+  data.forEach((group, gi) => {
+    if (!savedValues[type][gi]) savedValues[type][gi] = {};
+    if (!savedLabels[type][gi]) savedLabels[type][gi] = {};
+    group.items.forEach((item, ii) => {
+      if (!savedValues[type][gi][ii]) savedValues[type][gi][ii] = {};
+      const v1 = document.getElementById(`f_${type}_${gi}_${ii}_0`);
+      const v2 = document.getElementById(`f_${type}_${gi}_${ii}_1`);
+      if (v1) savedValues[type][gi][ii][0] = v1.value;
+      if (v2) savedValues[type][gi][ii][1] = v2.value;
+      if (item.editable) {
+        const lbl = document.getElementById(`lbl_${type}_${gi}_${ii}`);
+        if (lbl) savedLabels[type][gi][ii] = lbl.value;
+      }
+    });
+  });
+}
+
+// ─── BUILD FIELDS ─────────────────────────────────────────
+function buildContainer(containerId, data, type) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const isCouple = situation === 'couple';
+  const colClass = isCouple ? 'couple' : 'solo';
+
+  data.forEach((group, gi) => {
+    const card = document.createElement('div');
+    card.className = 'section-card';
+
+    // Column headers (sticky within section)
+    let headHtml = '';
+    if (isCouple) {
+      headHtml = `<div class="col-heads-sticky couple">
+        <span>Poste</span>
+        <span>C1 mensuel</span><span>C1 annuel</span>
+        <span>C2 mensuel</span><span>C2 annuel</span>
+      </div>`;
+    } else {
+      headHtml = `<div class="col-heads-sticky solo">
+        <span>Poste</span>
+        <span>Mensuel</span><span>Annuel</span>
+      </div>`;
+    }
+
+    // Field rows
+    let rowsHtml = '';
+    group.items.forEach((item, ii) => {
+      const showC2 = isCouple && (item.conjoint !== false);
+      const savedV0 = (savedValues[type][gi] && savedValues[type][gi][ii] && savedValues[type][gi][ii][0]) || '';
+      const savedV1 = (savedValues[type][gi] && savedValues[type][gi][ii] && savedValues[type][gi][ii][1]) || '';
+      const savedLbl = (savedLabels[type][gi] && savedLabels[type][gi][ii]) || item.label;
+
+      const labelHtml = item.editable
+        ? `<input type="text" class="field-input editable-name" id="lbl_${type}_${gi}_${ii}" value="${savedLbl}" placeholder="Nommez ce poste…">`
+        : `<div class="field-label">${item.label}</div>`;
+
+      const id0 = `f_${type}_${gi}_${ii}_0`;
+      const id0a = `fa_${type}_${gi}_${ii}_0`;
+      const id1 = `f_${type}_${gi}_${ii}_1`;
+      const id1a = `fa_${type}_${gi}_${ii}_1`;
+
+      if (isCouple) {
+        rowsHtml += `<div class="field-row couple">
+          ${labelHtml}
+          <div class="input-wrap"><input type="number" min="0" class="field-input budget-input" id="${id0}" value="${savedV0}" placeholder="0" oninput="calcAnnuel('${id0}','${id0a}')"></div>
+          <div class="input-wrap"><input type="number" class="field-input readonly" id="${id0a}" value="${savedV0 ? Math.round(savedV0*12) : ''}" placeholder="0" readonly></div>
+          ${showC2 ? `
+          <div class="input-wrap"><input type="number" min="0" class="field-input budget-input" id="${id1}" value="${savedV1}" placeholder="0" oninput="calcAnnuel('${id1}','${id1a}')"></div>
+          <div class="input-wrap"><input type="number" class="field-input readonly" id="${id1a}" value="${savedV1 ? Math.round(savedV1*12) : ''}" placeholder="0" readonly></div>
+          ` : `<div></div><div></div>`}
+        </div>`;
+      } else {
+        rowsHtml += `<div class="field-row solo">
+          ${labelHtml}
+          <div class="input-wrap"><input type="number" min="0" class="field-input budget-input" id="${id0}" value="${savedV0}" placeholder="0" oninput="calcAnnuel('${id0}','${id0a}')"></div>
+          <div class="input-wrap"><input type="number" class="field-input readonly" id="${id0a}" value="${savedV0 ? Math.round(savedV0*12) : ''}" placeholder="0" readonly></div>
+        </div>`;
+      }
+    });
+
+    card.innerHTML = `
+      <div class="section-header open" onclick="toggleSection(this)">
+        <div class="section-header-left">
+          <div class="section-icon">${group.icon}</div>
+          <div class="section-title">${group.cat}</div>
+        </div>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body open">
+        ${headHtml}
+        <div class="fields-body">${rowsHtml}</div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+function calcAnnuel(monthlyId, annualId) {
+  const v = parseFloat(document.getElementById(monthlyId).value) || 0;
+  const annEl = document.getElementById(annualId);
+  if (annEl) annEl.value = v > 0 ? Math.round(v * 12) : '';
+}
+
+function toggleSection(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+// ─── CALCULATE ────────────────────────────────────────────
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? (parseFloat(el.value) || 0) : 0;
+}
+
+function fmt(n) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+}
+
+function calcGroup(data, type) {
+  let total = 0;
+  const breakdown = [];
+  data.forEach((group, gi) => {
+    let catTotal = 0;
+    const lines = [];
+    group.items.forEach((item, ii) => {
+      const v0 = getVal(`f_${type}_${gi}_${ii}_0`);
+      const v1 = getVal(`f_${type}_${gi}_${ii}_1`);
+      const v = v0 + v1;
+      if (v > 0) {
+        const lbl = item.editable
+          ? (document.getElementById(`lbl_${type}_${gi}_${ii}`)?.value || item.label)
+          : item.label;
+        lines.push({ label: lbl, val: v });
+        catTotal += v;
+      }
+    });
+    if (catTotal > 0) breakdown.push({ cat: group.cat, icon: group.icon, total: catTotal, lines });
+    total += catTotal;
+  });
+  return { total, breakdown };
+}
+
+function buildSynthese() {
+  saveCurrentStep();
+  const rev = calcGroup(REVENUS_DATA, 'revenus');
+  const dep = calcGroup(DEPENSES_DATA, 'depenses');
+  const solde = rev.total - dep.total;
+
+  document.getElementById('s-revenus').textContent = fmt(rev.total);
+  document.getElementById('s-revenus-an').textContent = fmt(rev.total * 12) + ' / an';
+  document.getElementById('s-depenses').textContent = fmt(dep.total);
+  document.getElementById('s-depenses-an').textContent = fmt(dep.total * 12) + ' / an';
+
+  const soldeEl = document.getElementById('s-solde');
+  soldeEl.textContent = fmt(solde);
+  soldeEl.className = 'synth-value ' + (solde >= 0 ? 'positive' : 'negative');
+  document.getElementById('s-solde-an').textContent = fmt(solde * 12) + ' / an';
+
+  buildDetailTable('detail-revenus', 'Détail des revenus', rev.breakdown);
+  buildDetailTable('detail-depenses', 'Détail des dépenses', dep.breakdown);
+  document.getElementById('send-status').textContent = '';
+}
+
+function buildDetailTable(containerId, title, breakdown) {
+  const el = document.getElementById(containerId);
+  if (!breakdown.length) { el.innerHTML = ''; return; }
+  let html = `<div style="font-family:'Playfair Display',serif;font-size:1rem;margin:1.5rem 0 0.75rem;">${title}</div>
+  <div class="section-card"><table class="detail-table">
+  <thead><tr><th>Catégorie / Poste</th><th>Mensuel</th><th>Annuel</th></tr></thead><tbody>`;
+  breakdown.forEach(g => {
+    html += `<tr class="cat-row"><td>${g.icon} ${g.cat}</td><td>${fmt(g.total)}</td><td>${fmt(g.total * 12)}</td></tr>`;
+    g.lines.forEach(l => {
+      html += `<tr><td style="padding-left:2rem;">${l.label}</td><td>${fmt(l.val)}</td><td>${fmt(l.val * 12)}</td></tr>`;
+    });
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+// ─── SUBMIT via Formspree ──────────────────────────────────
+async function submitForm() {
+  const btn = document.getElementById('btn-send');
+  const status = document.getElementById('send-status');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours…';
+  status.textContent = '';
+  status.className = 'send-status';
+
+  const prenom1 = document.getElementById('prenom1').value || '—';
+  const prenom2 = document.getElementById('prenom2').value || '';
+  const email = document.getElementById('email').value || '—';
+  const rdv = document.getElementById('rdv-date').value || '—';
+
+  const rev = calcGroup(REVENUS_DATA, 'revenus');
+  const dep = calcGroup(DEPENSES_DATA, 'depenses');
+  const solde = rev.total - dep.total;
+
+  // Build text summary for email
+  let body = `=== BILAN BUDGÉTAIRE REZILIANCE ===\n\n`;
+  body += `Client : ${prenom1}${prenom2 ? ' & ' + prenom2 : ''}\n`;
+  body += `Email : ${email}\n`;
+  body += `Date RDV : ${rdv}\n`;
+  body += `Situation : ${situation === 'couple' ? 'En couple' : 'Seul(e)'}\n\n`;
+  body += `--- SYNTHÈSE ---\n`;
+  body += `Revenus mensuels : ${fmt(rev.total)} (${fmt(rev.total * 12)} / an)\n`;
+  body += `Dépenses mensuelles : ${fmt(dep.total)} (${fmt(dep.total * 12)} / an)\n`;
+  body += `Solde mensuel : ${fmt(solde)} (${fmt(solde * 12)} / an)\n\n`;
+  body += `--- DÉTAIL REVENUS ---\n`;
+  rev.breakdown.forEach(g => {
+    body += `\n${g.cat} : ${fmt(g.total)}/mois\n`;
+    g.lines.forEach(l => body += `  • ${l.label} : ${fmt(l.val)}/mois\n`);
+  });
+  body += `\n--- DÉTAIL DÉPENSES ---\n`;
+  dep.breakdown.forEach(g => {
+    body += `\n${g.cat} : ${fmt(g.total)}/mois\n`;
+    g.lines.forEach(l => body += `  • ${l.label} : ${fmt(l.val)}/mois\n`);
+  });
+
+  // ── FORMSPREE ENDPOINT ──
+  // Remplace YOUR_FORM_ID par ton ID Formspree (ex: xpwzgknd)
+  // Créer un compte gratuit sur formspree.io → New Form → copier l'ID
+  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xjgpzzwz';
+
+  try {
+    const res = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject: `Bilan budgétaire – ${prenom1}${prenom2 ? ' & ' + prenom2 : ''} – RDV ${rdv}`,
+        client: `${prenom1}${prenom2 ? ' & ' + prenom2 : ''}`,
+        email_client: email,
+        rdv_date: rdv,
+        situation: situation === 'couple' ? 'En couple' : 'Seul(e)',
+        revenus_mensuels: fmt(rev.total),
+        depenses_mensuelles: fmt(dep.total),
+        solde_mensuel: fmt(solde),
+        detail_complet: body
+      })
+    });
+
+    if (res.ok) {
+      document.getElementById('confirm-name').textContent = prenom1;
+      document.querySelectorAll('.step-section').forEach(s => s.classList.remove('visible'));
+      document.getElementById('step-4').classList.add('visible');
+      document.querySelectorAll('.progress-steps .step-item').forEach(el => {
+        el.classList.remove('active'); el.classList.add('done');
+      });
+      window.scrollTo(0, 0);
+    } else {
+      throw new Error('Erreur serveur');
+    }
+  } catch (e) {
+    status.textContent = 'Envoi impossible. Veuillez contacter directement votre conseiller.';
+    status.className = 'send-status err';
+    btn.disabled = false;
+    btn.textContent = 'Envoyer à mon conseiller ✓';
+  }
+}
+</script>
+</body>
+</html>
