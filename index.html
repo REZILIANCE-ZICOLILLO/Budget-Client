@@ -661,44 +661,61 @@ async function submitForm() {
   const prenom1 = document.getElementById('prenom1').value || '—';
   const prenom2 = document.getElementById('prenom2').value || '';
   const email = document.getElementById('email').value || '—';
-  const rdvEl = document.getElementById('rdv-date'); const rdv = rdvEl ? rdvEl.value || '—' : '—';
 
   const rev = calcGroup(REVENUS_DATA, 'revenus');
   const dep = calcGroup(DEPENSES_DATA, 'depenses');
   const solde = rev.total - dep.total;
 
-  let revenus_tableau = '';
-  rev.breakdown.forEach(g => {
-    revenus_tableau += `<tr class="cat"><td colspan="3">${g.icon} ${g.cat} — ${fmt(g.total)}/mois</td></tr>`;
-    g.lines.forEach(l => {
-      revenus_tableau += `<tr><td class="indent">${l.label}</td><td>${fmt(l.val)}</td><td>${fmt(l.val * 12)}</td></tr>`;
-    });
-  });
-  if (!revenus_tableau) revenus_tableau = '<tr><td colspan="3" style="color:#aaa;font-style:italic;">Aucun revenu renseigné</td></tr>';
+  // Build text detail for revenus — toutes les lignes, y compris vides
+  function pad(str, len) {
+    str = String(str);
+    return str.length >= len ? str : str + ' '.repeat(len - str.length);
+  }
+  function fmtLine(label, val) {
+    const valStr = val > 0 ? fmt(val) + '/mois  ' + fmt(val*12) + '/an' : '—';
+    return '  ' + pad(label, 52) + valStr;
+  }
 
-  let depenses_tableau = '';
-  dep.breakdown.forEach(g => {
-    depenses_tableau += `<tr class="cat"><td colspan="3">${g.icon} ${g.cat} — ${fmt(g.total)}/mois</td></tr>`;
-    g.lines.forEach(l => {
-      depenses_tableau += `<tr><td class="indent">${l.label}</td><td>${fmt(l.val)}</td><td>${fmt(l.val * 12)}</td></tr>`;
+  let revenus_detail = '';
+  REVENUS_DATA.forEach((group, gi) => {
+    const catTotal = group.items.reduce((s, item, ii) => {
+      return s + (getVal('f_revenus_' + gi + '_' + ii + '_0') + getVal('f_revenus_' + gi + '_' + ii + '_1'));
+    }, 0);
+    revenus_detail += '\n▸ ' + group.cat.toUpperCase() + (catTotal > 0 ? '  →  ' + fmt(catTotal) + '/mois' : '') + '\n';
+    group.items.forEach((item, ii) => {
+      const v = getVal('f_revenus_' + gi + '_' + ii + '_0') + getVal('f_revenus_' + gi + '_' + ii + '_1');
+      revenus_detail += fmtLine(item.label, v) + '\n';
     });
   });
-  if (!depenses_tableau) depenses_tableau = '<tr><td colspan="3" style="color:#aaa;font-style:italic;">Aucune dépense renseignée</td></tr>';
+
+  let depenses_detail = '';
+  DEPENSES_DATA.forEach((group, gi) => {
+    const catTotal = group.items.reduce((s, item, ii) => {
+      return s + getVal('f_depenses_' + gi + '_' + ii + '_0');
+    }, 0);
+    depenses_detail += '\n▸ ' + group.cat.toUpperCase() + (catTotal > 0 ? '  →  ' + fmt(catTotal) + '/mois' : '') + '\n';
+    group.items.forEach((item, ii) => {
+      const v = getVal('f_depenses_' + gi + '_' + ii + '_0');
+      const lbl = item.editable
+        ? (document.getElementById('lbl_depenses_' + gi + '_' + ii)?.value || item.label)
+        : item.label;
+      depenses_detail += fmtLine(lbl, v) + '\n';
+    });
+  });
 
   const templateParams = {
     client: `${prenom1}${prenom2 ? ' & ' + prenom2 : ''}`,
     situation: situation === 'couple' ? 'En couple' : 'Seul(e)',
     email_client: email,
-    rdv_date: rdv,
     revenus_mensuels: fmt(rev.total),
     revenus_annuels: fmt(rev.total * 12),
     depenses_mensuelles: fmt(dep.total),
     depenses_annuelles: fmt(dep.total * 12),
     solde_mensuel: fmt(solde),
     solde_annuel: fmt(solde * 12),
-    solde_class: solde >= 0 ? 'positive' : 'negative',
-    revenus_tableau: revenus_tableau,
-    depenses_tableau: depenses_tableau
+    solde_signe: solde >= 0 ? '✅ Positif' : '⚠️ Négatif',
+    revenus_detail: revenus_detail,
+    depenses_detail: depenses_detail
   };
 
   try {
