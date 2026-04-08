@@ -47,7 +47,7 @@
     display: flex; align-items: center; justify-content: center; font-size: 11px; color: #666; position: relative; z-index: 1; transition: all 0.3s;
   }
   .step-item.active .step-dot { border-color: var(--gold); background: var(--gold); color: var(--dark); font-weight: 500; }
-  .step-item.done .step-dot { border-color: var(--gold); background: transparent; color: var(--gold); }
+  .step-item.done .step-dot { border-color: var(--gold); background: var(--gold); color: var(--dark); font-weight: 500; }
   .step-label { font-size: 10px; color: #555; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
   .step-item.active .step-label { color: var(--gold); }
 
@@ -121,8 +121,8 @@
     background: var(--section-bg); width: 100%; transition: border-color 0.2s;
   }
   .field-input:focus { outline: none; border-color: var(--gold); background: var(--white); }
-  .field-input.readonly {
-    background: #F0EBE0; color: var(--mid); cursor: default; border-color: transparent;
+  .field-input.annual {
+    background: #F5F0E8; color: var(--dark);
   }
   .field-input.editable-name {
     padding-left: 0.6rem; font-style: italic; color: var(--mid);
@@ -176,7 +176,7 @@
 <body>
 
 <div class="header">
-  <div class="header-logo">Reziliance <span>·</span> Conseil & Stratégie Patrimoniale</div>
+  <div class="header-logo">REZILIANCE <span>·</span> Conseil & Stratégie Patrimoniale</div>
   <div class="header-sub">Espace client confidentiel</div>
   <div class="header-title">Tableau budgétaire</div>
   <div class="header-desc">Ce formulaire vous permet de nous transmettre votre situation budgétaire en toute sécurité, avant notre rendez-vous patrimonial.</div>
@@ -235,15 +235,9 @@
               <input type="text" class="field-input" style="padding-left:0.75rem;" id="prenom2" placeholder="Prénom">
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-            <div>
-              <div style="font-size:0.8rem;color:var(--mid);margin-bottom:0.3rem;">Email de contact</div>
-              <input type="email" class="field-input" style="padding-left:0.75rem;" id="email" placeholder="votre@email.fr">
-            </div>
-            <div>
-              <div style="font-size:0.8rem;color:var(--mid);margin-bottom:0.3rem;">Date du rendez-vous</div>
-              <input type="date" class="field-input" style="padding-left:0.75rem;" id="rdv-date">
-            </div>
+          <div>
+            <div style="font-size:0.8rem;color:var(--mid);margin-bottom:0.3rem;">Email de contact</div>
+            <input type="email" class="field-input" style="padding-left:0.75rem;" id="email" placeholder="votre@email.fr">
           </div>
         </div>
       </div>
@@ -258,7 +252,7 @@
   <div class="step-section" id="step-1">
     <div style="margin-bottom:1.25rem;">
       <div style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:0.25rem;">Vos revenus</div>
-      <div style="font-size:0.85rem;color:var(--mid);">Saisissez les montants mensuels nets. L'annuel se calcule automatiquement.</div>
+      <div style="font-size:0.85rem;color:var(--mid);">Saisissez en mensuel <strong>ou</strong> en annuel — l'autre champ se calcule automatiquement.</div>
     </div>
     <div id="revenus-container"></div>
     <div class="nav-row">
@@ -271,7 +265,7 @@
   <div class="step-section" id="step-2">
     <div style="margin-bottom:1.25rem;">
       <div style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:0.25rem;">Vos dépenses</div>
-      <div style="font-size:0.85rem;color:var(--mid);">Saisissez les montants mensuels. L'annuel se calcule automatiquement.</div>
+      <div style="font-size:0.85rem;color:var(--mid);">Saisissez en mensuel <strong>ou</strong> en annuel — l'autre champ se calcule automatiquement.</div>
     </div>
     <div id="depenses-container"></div>
     <div class="nav-row">
@@ -305,7 +299,7 @@
 
     <div class="disclaimer">
       Ces informations sont transmises de manière confidentielle à votre conseiller Reziliance dans le cadre de la préparation de votre bilan patrimonial.<br><br>
-      <strong>Reziliance – Conseil & Stratégie Patrimoniale</strong> — Sous l'égide d'INOVEA
+      <strong>Reziliance – Conseil & Stratégie Patrimoniale</strong>
     </div>
 
     <div id="send-status" class="send-status"></div>
@@ -536,18 +530,18 @@ function buildContainer(containerId, data, type) {
       if (isCouple) {
         rowsHtml += `<div class="field-row couple">
           ${labelHtml}
-          <div class="input-wrap"><input type="number" min="0" class="field-input budget-input" id="${id0}" value="${savedV0}" placeholder="0" oninput="calcAnnuel('${id0}','${id0a}')"></div>
-          <div class="input-wrap"><input type="number" class="field-input readonly" id="${id0a}" value="${savedV0 ? Math.round(savedV0*12) : ''}" placeholder="0" readonly></div>
+          <div class="input-wrap"><input type="number" min="0" class="field-input budget-input" id="${id0}" value="${savedV0}" placeholder="0" oninput="syncFromMonthly('${id0}','${id0a}')"></div>
+          <div class="input-wrap"><input type="number" min="0" class="field-input annual" id="${id0a}" value="${savedV0 ? Math.round(savedV0*12) : ''}" placeholder="0" oninput="syncFromAnnual('${id0a}','${id0}')"></div>
           ${showC2 ? `
-          <div class="input-wrap"><input type="number" min="0" class="field-input budget-input" id="${id1}" value="${savedV1}" placeholder="0" oninput="calcAnnuel('${id1}','${id1a}')"></div>
-          <div class="input-wrap"><input type="number" class="field-input readonly" id="${id1a}" value="${savedV1 ? Math.round(savedV1*12) : ''}" placeholder="0" readonly></div>
+          <div class="input-wrap"><input type="number" min="0" class="field-input budget-input" id="${id1}" value="${savedV1}" placeholder="0" oninput="syncFromMonthly('${id1}','${id1a}')"></div>
+          <div class="input-wrap"><input type="number" min="0" class="field-input annual" id="${id1a}" value="${savedV1 ? Math.round(savedV1*12) : ''}" placeholder="0" oninput="syncFromAnnual('${id1a}','${id1}')"></div>
           ` : `<div></div><div></div>`}
         </div>`;
       } else {
         rowsHtml += `<div class="field-row solo">
           ${labelHtml}
-          <div class="input-wrap"><input type="number" min="0" class="field-input budget-input" id="${id0}" value="${savedV0}" placeholder="0" oninput="calcAnnuel('${id0}','${id0a}')"></div>
-          <div class="input-wrap"><input type="number" class="field-input readonly" id="${id0a}" value="${savedV0 ? Math.round(savedV0*12) : ''}" placeholder="0" readonly></div>
+          <div class="input-wrap"><input type="number" min="0" class="field-input budget-input" id="${id0}" value="${savedV0}" placeholder="0" oninput="syncFromMonthly('${id0}','${id0a}')"></div>
+          <div class="input-wrap"><input type="number" min="0" class="field-input annual" id="${id0a}" value="${savedV0 ? Math.round(savedV0*12) : ''}" placeholder="0" oninput="syncFromAnnual('${id0a}','${id0}')"></div>
         </div>`;
       }
     });
@@ -568,10 +562,15 @@ function buildContainer(containerId, data, type) {
   });
 }
 
-function calcAnnuel(monthlyId, annualId) {
+function syncFromMonthly(monthlyId, annualId) {
   const v = parseFloat(document.getElementById(monthlyId).value) || 0;
   const annEl = document.getElementById(annualId);
   if (annEl) annEl.value = v > 0 ? Math.round(v * 12) : '';
+}
+function syncFromAnnual(annualId, monthlyId) {
+  const v = parseFloat(document.getElementById(annualId).value) || 0;
+  const mEl = document.getElementById(monthlyId);
+  if (mEl) mEl.value = v > 0 ? Math.round(v / 12) : '';
 }
 
 function toggleSection(header) {
@@ -662,7 +661,7 @@ async function submitForm() {
   const prenom1 = document.getElementById('prenom1').value || '—';
   const prenom2 = document.getElementById('prenom2').value || '';
   const email = document.getElementById('email').value || '—';
-  const rdv = document.getElementById('rdv-date').value || '—';
+  const rdvEl = document.getElementById('rdv-date'); const rdv = rdvEl ? rdvEl.value || '—' : '—';
 
   const rev = calcGroup(REVENUS_DATA, 'revenus');
   const dep = calcGroup(DEPENSES_DATA, 'depenses');
