@@ -650,7 +650,7 @@ function buildDetailTable(containerId, title, breakdown) {
   el.innerHTML = html;
 }
 
-// ─── SUBMIT via Formspree ──────────────────────────────────
+// ─── SUBMIT via EmailJS ───────────────────────────────────
 async function submitForm() {
   const btn = document.getElementById('btn-send');
   const status = document.getElementById('send-status');
@@ -668,60 +668,49 @@ async function submitForm() {
   const dep = calcGroup(DEPENSES_DATA, 'depenses');
   const solde = rev.total - dep.total;
 
-  // Build text summary for email
-  let body = `=== BILAN BUDGÉTAIRE REZILIANCE ===\n\n`;
-  body += `Client : ${prenom1}${prenom2 ? ' & ' + prenom2 : ''}\n`;
-  body += `Email : ${email}\n`;
-  body += `Date RDV : ${rdv}\n`;
-  body += `Situation : ${situation === 'couple' ? 'En couple' : 'Seul(e)'}\n\n`;
-  body += `--- SYNTHÈSE ---\n`;
-  body += `Revenus mensuels : ${fmt(rev.total)} (${fmt(rev.total * 12)} / an)\n`;
-  body += `Dépenses mensuelles : ${fmt(dep.total)} (${fmt(dep.total * 12)} / an)\n`;
-  body += `Solde mensuel : ${fmt(solde)} (${fmt(solde * 12)} / an)\n\n`;
-  body += `--- DÉTAIL REVENUS ---\n`;
+  let revenus_tableau = '';
   rev.breakdown.forEach(g => {
-    body += `\n${g.cat} : ${fmt(g.total)}/mois\n`;
-    g.lines.forEach(l => body += `  • ${l.label} : ${fmt(l.val)}/mois\n`);
+    revenus_tableau += `<tr class="cat"><td colspan="3">${g.icon} ${g.cat} — ${fmt(g.total)}/mois</td></tr>`;
+    g.lines.forEach(l => {
+      revenus_tableau += `<tr><td class="indent">${l.label}</td><td>${fmt(l.val)}</td><td>${fmt(l.val * 12)}</td></tr>`;
+    });
   });
-  body += `\n--- DÉTAIL DÉPENSES ---\n`;
-  dep.breakdown.forEach(g => {
-    body += `\n${g.cat} : ${fmt(g.total)}/mois\n`;
-    g.lines.forEach(l => body += `  • ${l.label} : ${fmt(l.val)}/mois\n`);
-  });
+  if (!revenus_tableau) revenus_tableau = '<tr><td colspan="3" style="color:#aaa;font-style:italic;">Aucun revenu renseigné</td></tr>';
 
-  // ── FORMSPREE ENDPOINT ──
-  // Remplace YOUR_FORM_ID par ton ID Formspree (ex: xpwzgknd)
-  // Créer un compte gratuit sur formspree.io → New Form → copier l'ID
-  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xjgpzzwz';
+  let depenses_tableau = '';
+  dep.breakdown.forEach(g => {
+    depenses_tableau += `<tr class="cat"><td colspan="3">${g.icon} ${g.cat} — ${fmt(g.total)}/mois</td></tr>`;
+    g.lines.forEach(l => {
+      depenses_tableau += `<tr><td class="indent">${l.label}</td><td>${fmt(l.val)}</td><td>${fmt(l.val * 12)}</td></tr>`;
+    });
+  });
+  if (!depenses_tableau) depenses_tableau = '<tr><td colspan="3" style="color:#aaa;font-style:italic;">Aucune dépense renseignée</td></tr>';
+
+  const templateParams = {
+    client: `${prenom1}${prenom2 ? ' & ' + prenom2 : ''}`,
+    situation: situation === 'couple' ? 'En couple' : 'Seul(e)',
+    email_client: email,
+    rdv_date: rdv,
+    revenus_mensuels: fmt(rev.total),
+    revenus_annuels: fmt(rev.total * 12),
+    depenses_mensuelles: fmt(dep.total),
+    depenses_annuelles: fmt(dep.total * 12),
+    solde_mensuel: fmt(solde),
+    solde_annuel: fmt(solde * 12),
+    solde_class: solde >= 0 ? 'positive' : 'negative',
+    revenus_tableau: revenus_tableau,
+    depenses_tableau: depenses_tableau
+  };
 
   try {
-    const res = await fetch(FORMSPREE_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        _subject: `Bilan budgétaire – ${prenom1}${prenom2 ? ' & ' + prenom2 : ''} – RDV ${rdv}`,
-        client: `${prenom1}${prenom2 ? ' & ' + prenom2 : ''}`,
-        email_client: email,
-        rdv_date: rdv,
-        situation: situation === 'couple' ? 'En couple' : 'Seul(e)',
-        revenus_mensuels: fmt(rev.total),
-        depenses_mensuelles: fmt(dep.total),
-        solde_mensuel: fmt(solde),
-        detail_complet: body
-      })
+    await emailjs.send('service_j7s0nsr', 'template_uo3f5mu', templateParams);
+    document.getElementById('confirm-name').textContent = prenom1;
+    document.querySelectorAll('.step-section').forEach(s => s.classList.remove('visible'));
+    document.getElementById('step-4').classList.add('visible');
+    document.querySelectorAll('.progress-steps .step-item').forEach(el => {
+      el.classList.remove('active'); el.classList.add('done');
     });
-
-    if (res.ok) {
-      document.getElementById('confirm-name').textContent = prenom1;
-      document.querySelectorAll('.step-section').forEach(s => s.classList.remove('visible'));
-      document.getElementById('step-4').classList.add('visible');
-      document.querySelectorAll('.progress-steps .step-item').forEach(el => {
-        el.classList.remove('active'); el.classList.add('done');
-      });
-      window.scrollTo(0, 0);
-    } else {
-      throw new Error('Erreur serveur');
-    }
+    window.scrollTo(0, 0);
   } catch (e) {
     status.textContent = 'Envoi impossible. Veuillez contacter directement votre conseiller.';
     status.className = 'send-status err';
@@ -730,5 +719,7 @@ async function submitForm() {
   }
 }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('qCQkQUDjdKJXomEsq');</script>
 </body>
 </html>
